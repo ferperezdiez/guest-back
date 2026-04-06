@@ -1,0 +1,19 @@
+# Nombre único en Fly.io. Si está ocupado: fly apps create otro-nombre y cambia `app` aquí.
+# URL pública: https://<app>.fly.dev → úsala en Vercel como VITE_API_URL (sin barra final).
+app = "guest-app-api"
+primary_region = "mad"
+
+[build]
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
