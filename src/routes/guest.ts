@@ -62,14 +62,21 @@ guestRouter.get('/bootstrap', async (req, res) => {
         : null
 
     let preCheckinCompleted = false
+    let guestFirstName: string | null = null
     if (sessionToken) {
       const sess = await pool.query(
-        `SELECT 1 FROM guest_sessions
-         WHERE session_token = $1 AND property_id = $2 AND device_id = $3
-           AND expires_at > now()`,
+        `SELECT l.full_name
+         FROM guest_sessions gs
+         JOIN leads l ON l.id = gs.lead_id
+         WHERE gs.session_token = $1 AND gs.property_id = $2 AND gs.device_id = $3
+           AND gs.expires_at > now()`,
         [sessionToken, propertyId, deviceId],
       )
-      preCheckinCompleted = (sess.rowCount ?? 0) > 0
+      if ((sess.rowCount ?? 0) > 0) {
+        preCheckinCompleted = true
+        const full = String(sess.rows[0].full_name ?? '').trim()
+        guestFirstName = full.split(/\s+/)[0] || null
+      }
     }
 
     return res.json({
@@ -83,7 +90,13 @@ guestRouter.get('/bootstrap', async (req, res) => {
         logoUrl: p.logo_url,
       },
       banner,
+      /** Contactos para el widget de ayuda; rellenar desde DB cuando exista el modelo. */
+      helpContacts: {
+        host: null,
+        agency: null,
+      },
       preCheckinCompleted,
+      guestFirstName,
     })
   } catch (e) {
     console.error(e)
